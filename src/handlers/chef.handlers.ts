@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 import Chef, { IChefModel } from "../models/chef.model";
-import { EStatus } from "../../enum/status.enum";
+import { EStatus } from "../enum/status.enum";
 import ChefOfTheWeek from "../models/cotw.model";
 
 const ChefHandler = {

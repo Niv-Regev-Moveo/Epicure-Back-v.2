@@ -1,7 +1,8 @@
 import mongoose, { Schema, Document } from "mongoose";
-import { EStatus } from "../../enum/status.enum";
+
 import { IRestaurantModel } from "./restaurant.model";
-import { EIconMeaning } from "../../enum/iconMeaning.enum";
+import { EStatus } from "../enum/status.enum";
+import { EIconMeaning } from "../enum/iconMeaning.enum";
 
 export interface IDishModel extends Document {
   name: string;
@@ -19,7 +20,7 @@ const dishSchema = new Schema<IDishModel>({
   image: { type: String, required: true },
   type: { type: String, enum: EIconMeaning, default: null, required: false },
   price: { type: Number, required: true },
-  tags: [{ type: String }],
+  tags: [{ type: String, required: false }],
   ingredients: [{ type: String, required: true }],
   restaurant: {
     type: Schema.Types.ObjectId,

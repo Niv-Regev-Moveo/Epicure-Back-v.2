@@ -5,7 +5,6 @@ export const getAll = async (req: Request, res: Response) => {
   try {
     const restaurants = await RestaurantHandler.getAll();
     res.json(restaurants);
-    console.log(restaurants);
   } catch (error) {
     res.status(500).json({ message: "Error: An unexpected error occurred" });
   }
@@ -57,4 +56,16 @@ export const update = async (req: Request, res: Response) => {
   }
 };
 
-export const deleteRestaurant = async (req: Request, res: Response) => {};
+export const deleteRestaurant = async (req: Request, res: Response) => {
+  try {
+    const restaurantId = req.params.id;
+    const deletedRestaurant = await RestaurantHandler.delete(restaurantId);
+    if (!deletedRestaurant) {
+      return res.status(404).json({ message: "Restaurant not found" });
+    }
+    console.log(deleteRestaurant);
+    res.json(deletedRestaurant);
+  } catch (error) {
+    res.status(500).json({ message: "An unexpected error occurred" });
+  }
+};

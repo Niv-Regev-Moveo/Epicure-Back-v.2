@@ -1,4 +1,4 @@
-import { EIconMeaning } from "../src/models/enum/iconMeaning.enum";
+import { EIconMeaning } from "../enum/iconMeaning.enum";
 
 export const demoDishes = [
   {

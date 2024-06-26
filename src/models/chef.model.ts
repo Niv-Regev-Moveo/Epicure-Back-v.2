@@ -1,6 +1,6 @@
 import mongoose, { Schema, Document } from "mongoose";
 import { IRestaurantModel } from "./restaurant.model";
-import { EStatus } from "../../enum/status.enum";
+import { EStatus } from "../enum/status.enum";
 
 export interface IChefModel extends Document {
   name: string;

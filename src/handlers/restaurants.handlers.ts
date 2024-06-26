@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-import { EStatus } from "../../enum/status.enum";
+import { EStatus } from "../enum/status.enum";
 import Chef from "../models/chef.model";
 import Restaurant, { IRestaurantModel } from "../models/restaurant.model";
 
@@ -21,14 +21,42 @@ const RestaurantHandler = {
   async getById(restaurantId: string): Promise<IRestaurantModel | null> {
     try {
       const result = await Restaurant.aggregate([
-        { $match: { _id: new mongoose.Types.ObjectId(restaurantId) } },
+        {
+          $match: {
+            status: "active",
+            _id: new mongoose.Types.ObjectId(restaurantId),
+          },
+        },
+        {
+          $lookup: {
+            from: "chefs",
+            localField: "chef",
+            foreignField: "_id",
+            as: "chefDetails",
+          },
+        },
+        {
+          $lookup: {
+            from: "dishes",
+            localField: "_id",
+            foreignField: "restaurant",
+            as: "dishesDetails",
+          },
+        },
         {
           $project: {
             name: 1,
             image: 1,
             rating: 1,
             description: 1,
-            dishes: 1,
+            dishes: {
+              $filter: {
+                input: "$dishesDetails",
+                as: "dish",
+                cond: { $eq: ["$$dish.status", "active"] },
+              },
+            },
+            chefName: { $arrayElemAt: ["$chefDetails.name", 0] },
           },
         },
       ]);
@@ -46,11 +74,13 @@ const RestaurantHandler = {
       const savedRestaurant = await newRestaurant.save();
       const populatedRestaurant = await savedRestaurant.populate("chef");
 
-      await Chef.findByIdAndUpdate(
-        populatedRestaurant.chef,
-        { $push: { restaurants: populatedRestaurant._id } },
-        { new: true, useFindAndModify: false }
-      );
+      if (populatedRestaurant && populatedRestaurant.chef)
+        // need to check
+        await Chef.findByIdAndUpdate(
+          populatedRestaurant.chef,
+          { $push: { restaurants: populatedRestaurant._id } },
+          { new: true, useFindAndModify: false }
+        );
 
       return populatedRestaurant;
     } catch (error) {
@@ -75,6 +105,17 @@ const RestaurantHandler = {
       return null;
     }
     return updatedRestaurant;
+  },
+
+  async delete(restaurantId: string): Promise<IRestaurantModel | null> {
+    const deletedRestaurant = await Restaurant.findByIdAndUpdate(
+      restaurantId,
+      { status: EStatus.ARCHIVE },
+      {
+        new: true,
+      }
+    );
+    return deletedRestaurant;
   },
 };
 

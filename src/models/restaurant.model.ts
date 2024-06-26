@@ -1,7 +1,7 @@
 import mongoose, { Schema, Document } from "mongoose";
 import { IChefModel } from "./chef.model";
 import { IDishModel } from "./dish.model";
-import { EStatus } from "../../enum/status.enum";
+import { EStatus } from "../enum/status.enum";
 export interface IRestaurantModel extends Document {
   name: string;
   image: string;
