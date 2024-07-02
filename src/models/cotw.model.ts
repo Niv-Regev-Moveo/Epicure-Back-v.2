@@ -1,20 +1,26 @@
+import { EStatus } from "../enum/status.enum";
 import mongoose, { Schema, Document } from "mongoose";
 
-export interface IChefOfTheWeek extends Document {
+export interface IChefOfTheWeekModel extends Document {
   name: string;
   image: string;
   description: string;
-  isChefOfTheWeek: boolean;
+  status: EStatus;
 }
 
-const chefOfTheWeekSchema = new Schema<IChefOfTheWeek>({
+const chefOfTheWeekSchema = new Schema<IChefOfTheWeekModel>({
   name: { type: String, required: true },
   image: { type: String, required: true },
   description: { type: String, required: true },
-  isChefOfTheWeek: { type: Boolean, required: true },
+  status: {
+    type: String,
+    enum: EStatus,
+    default: EStatus.ACTIVE,
+    required: true,
+  },
 });
 
-const ChefOfTheWeek = mongoose.model<IChefOfTheWeek>(
+const ChefOfTheWeek = mongoose.model<IChefOfTheWeekModel>(
   "ChefOfTheWeek",
   chefOfTheWeekSchema
 );

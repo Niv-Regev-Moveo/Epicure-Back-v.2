@@ -34,12 +34,13 @@ const SearchHandler = {
 
       const searchResults: ISearchResults = {};
 
-      if (restaurants.length) {
-        searchResults.restaurants = restaurants;
-      }
       if (chefs.length) {
         searchResults.chefs = chefs;
       }
+      if (restaurants.length) {
+        searchResults.restaurants = restaurants;
+      }
+
       if (dishes.length) {
         searchResults.dishes = dishes;
       }
