@@ -6,27 +6,29 @@
     "moduleResolution": "node",
     "removeComments": true,
     "sourceMap": false,
-    "outDir": "./dist",
-    "rootDir": "./src",
+    "outDir": "./dist", // Output directory for compiled files
+    "rootDir": "./src", // Root directory of your source files
     "resolveJsonModule": true,
     "skipLibCheck": true,
     "allowJs": true,
     "strict": false,
-    "baseUrl": "./",  // Ensures that base paths are relative to the tsconfig location
+    "baseUrl": "./", // Base URL for module resolution
     "paths": {
-      "*": ["src/*", "src/enum/*"]  // Adds custom paths for resolving modules
+      "*": ["src/*", "src/enum/*"] // Path mappings for module resolution
     }
   },
   "include": [
-    "src/**/*",
-    "src/enum/**/*"  // Ensures all files in the enum directory are included
+    "src/**/*", // Include all files in the src directory
+    "src/enum/**/*" // Include all files in the enum subdirectory
   ],
   "exclude": [
-    "node_modules",
-    "dist/*",
-    "src/static"
+    "node_modules", // Exclude node_modules directory
+    "dist/*", // Exclude dist directory
+    "src/static" // Exclude static subdirectory
   ],
   "lib": [
-    "es6"
+    "es6" // Include ES6 library definitions
   ]
 }
+
+
