@@ -56,7 +56,8 @@ export const deleteChef = async (req: Request, res: Response) => {
     if (!deletedChef) {
       return res.status(404).json({ message: "Chef not found" });
     }
-    console.log(deleteChef);
+    // console.log(deleteChef);
+    console.log(deletedChef);
     res.json(deletedChef);
   } catch (error) {
     res.status(500).json({ message: "An unexpected error occurred" });

@@ -19,6 +19,10 @@ const RestaurantHandler = {
   },
 
   async getById(restaurantId: string): Promise<IRestaurantModel | null> {
+    if (!mongoose.Types.ObjectId.isValid(restaurantId)) {
+      throw new Error(`Invalid restaurant ID format: ${restaurantId}`);
+    }
+
     try {
       const result = await Restaurant.aggregate([
         {
