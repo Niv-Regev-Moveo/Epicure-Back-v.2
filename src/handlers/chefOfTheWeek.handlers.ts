@@ -1,4 +1,6 @@
-import ChefOfTheWeek, { IChefOfTheWeekModel } from "../models/cotw.model";
+import ChefOfTheWeek, {
+  IChefOfTheWeekModel,
+} from "../models/chefOfTheWeek.model";
 import Chef from "../models/chef.model";
 import { EStatus } from "../enum/status.enum";
 import mongoose from "mongoose";
@@ -6,7 +8,7 @@ import mongoose from "mongoose";
 const ChefOfTheWeekHandler = {
   async getChefOfTheWeek(): Promise<IChefOfTheWeekModel | null> {
     try {
-      const chefOfTheWeek = await ChefOfTheWeek.findOne({ status: "active" });
+      const chefOfTheWeek = await ChefOfTheWeek.findOne();
       return chefOfTheWeek;
     } catch (error) {
       console.error("Error fetching Chef of the Week:", error);

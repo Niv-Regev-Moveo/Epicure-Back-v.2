@@ -1,4 +1,3 @@
-import { EStatus } from "../enum/status.enum";
 import mongoose, { Schema, Document } from "mongoose";
 
 export interface IChefOfTheWeekModel extends Document {

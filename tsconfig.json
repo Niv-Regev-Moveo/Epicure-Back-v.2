@@ -6,29 +6,26 @@
     "moduleResolution": "node",
     "removeComments": true,
     "sourceMap": false,
-    "outDir": "./dist", // Output directory for compiled files
-    "rootDir": "./src", // Root directory of your source files
+    "outDir": "./dist",
+    "rootDir": "./src",
     "resolveJsonModule": true,
     "skipLibCheck": true,
     "allowJs": true,
     "strict": false,
-    "baseUrl": "./", // Base URL for module resolution
+    "baseUrl": "./",
     "paths": {
-      "*": ["src/*", "src/enum/*"] // Path mappings for module resolution
+      "*": ["src/*"]
     }
   },
   "include": [
-    "src/**/*", // Include all files in the src directory
-    "src/enum/**/*" // Include all files in the enum subdirectory
+    "src/**/*"
   ],
   "exclude": [
-    "node_modules", // Exclude node_modules directory
-    "dist/*", // Exclude dist directory
-    "src/static" // Exclude static subdirectory
+    "node_modules",
+    "dist/*",
+    "src/static"
   ],
   "lib": [
-    "es6" // Include ES6 library definitions
+    "es6"
   ]
 }
-
-

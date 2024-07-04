@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import ChefOfTheWeekHandler from "../handlers/cotw.handlers";
+import ChefOfTheWeekHandler from "../handlers/chefOfTheWeek.handlers";
 
 export const getChefOfTheWeek = async (req: Request, res: Response) => {
   try {
@@ -9,7 +9,7 @@ export const getChefOfTheWeek = async (req: Request, res: Response) => {
         .status(404)
         .json({ message: "Chef of the week does not exist" });
     }
-    res.status(202).json(chefOfTheWeek);
+    res.status(200).json(chefOfTheWeek);
   } catch (error) {
     console.error("Error fetching Chef of the Week:", error);
     res.status(500).json({ message: "An unexpected error occurred" });

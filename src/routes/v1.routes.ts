@@ -3,7 +3,7 @@ import chefsRoutes from "./chef.routes";
 import restaurantsRoutes from "./restaurant.routes";
 import dishesRoutes from "./dish.routes";
 import searchRoutes from "./search.routes";
-import chefOfTheWeekRoutes from "./cotw.routes";
+import chefOfTheWeekRoutes from "../routes/chefOfTheWeek.routes";
 
 const v1Router = Router();
 

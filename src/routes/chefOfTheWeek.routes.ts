@@ -1,5 +1,5 @@
 import express from "express";
-import * as chefOfTheWeekController from "../controllers/cotw.controllers";
+import * as chefOfTheWeekController from "../controllers/chefOfTheWeek.controllers";
 
 const chefOfTheWeekRoutes = express.Router();
 

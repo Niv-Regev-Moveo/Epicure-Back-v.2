@@ -10,7 +10,7 @@ export const search = async (req: Request, res: Response) => {
       res.status(404).json({ message: "Keyword not exist in the database" });
     } else {
       console.log("Search results:", JSON.stringify(response, null, 2));
-      res.json(response);
+      res.status(200).json(response);
     }
   } catch (err) {
     console.error("Error during search:", err);

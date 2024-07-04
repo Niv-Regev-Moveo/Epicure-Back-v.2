@@ -2,7 +2,7 @@ import mongoose from "mongoose";
 import { EStatus } from "../enum/status.enum";
 import Chef from "../models/chef.model";
 import Restaurant, { IRestaurantModel } from "../models/restaurant.model";
-import Dish from "../models/cotw.model";
+import Dish from "../models/chefOfTheWeek.model";
 
 const RestaurantHandler = {
   async getAll(): Promise<IRestaurantModel[]> {
