@@ -13,7 +13,6 @@ const ChefOfTheWeekHandler = {
       throw error;
     }
   },
-
   async create(chefId: string) {
     const session = await mongoose.startSession();
     session.startTransaction();
@@ -38,12 +37,17 @@ const ChefOfTheWeekHandler = {
 
       const savedChefOfTheWeek = await newChefOfTheWeek.save({ session });
 
-      // Archive other chefs in the ChefOfTheWeek collection
-      await ChefOfTheWeek.updateMany(
-        { _id: { $ne: chef._id } },
-        { status: EStatus.ARCHIVE },
+      const oldChefsOfTheWeek = await ChefOfTheWeek.find({
+        _id: { $ne: chef._id },
+      }).session(session);
+
+      await Chef.updateMany(
+        { _id: { $in: oldChefsOfTheWeek.map((chef) => chef._id) } },
+        { chefOfTheWeek: false },
         { session }
       );
+
+      await ChefOfTheWeek.deleteMany({ _id: { $ne: chef._id } }, { session });
 
       await session.commitTransaction();
       session.endSession();

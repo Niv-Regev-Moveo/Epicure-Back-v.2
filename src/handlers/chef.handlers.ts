@@ -22,10 +22,24 @@ const ChefHandler = {
       const result = await Chef.aggregate([
         { $match: { _id: new mongoose.Types.ObjectId(chefId) } },
         {
+          $lookup: {
+            from: "restaurants",
+            localField: "restaurants",
+            foreignField: "_id",
+            as: "restaurantDetails",
+          },
+        },
+        {
           $project: {
             name: 1,
             image: 1,
-            restaurants: 1,
+            restaurants: {
+              $filter: {
+                input: "$restaurantDetails",
+                as: "restaurant",
+                cond: { $eq: ["$$restaurant.status", "active"] },
+              },
+            },
           },
         },
       ]);
