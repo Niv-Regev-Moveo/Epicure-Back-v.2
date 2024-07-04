@@ -3,6 +3,7 @@ import mongoose from "mongoose";
 import dotenv from "dotenv";
 import cors from "cors";
 import apiRouter from "./routes/api.routes";
+import { setupSwagger } from "./swagger/swagger";
 
 dotenv.config();
 
@@ -13,6 +14,8 @@ app.use(express.json());
 app.get("/", (req, res) => {
   res.send("Connected with Express, Rest API");
 });
+
+setupSwagger(app);
 
 app.use("/api", apiRouter);
 

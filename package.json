@@ -6,7 +6,7 @@
   "start": "nodemon .",
   "scripts": {
     "start": "ts-node src/index.ts",
-    "dev": "nodemon src/index.ts" 
+    "dev": "nodemon src/index.ts"
   },
   "keywords": [],
   "author": "",
@@ -20,6 +20,8 @@
     "enum": "^3.0.4",
     "express": "^4.19.2",
     "mongodb": "^6.7.0",
+    "swagger-jsdoc": "^6.2.8",
+    "swagger-ui-express": "^5.0.1",
     "ts-node": "^10.9.2"
   },
   "devDependencies": {
