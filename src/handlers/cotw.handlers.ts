@@ -13,26 +13,29 @@ const ChefOfTheWeekHandler = {
       throw error;
     }
   },
-  async create(chefId: string) {
+
+  async create(chefId: string): Promise<{ _id: string; name: string } | null> {
     const session = await mongoose.startSession();
     session.startTransaction();
 
     try {
-      const chef = await Chef.findById(chefId).session(session);
+      const chef = await Chef.findById({
+        _id: chefId,
+        status: EStatus.ACTIVE,
+      }).session(session);
       if (!chef) {
         throw new Error("Chef not found");
       }
 
-      if (!chef.chefOfTheWeek) {
-        throw new Error("Chef is not marked as Chef of the Week");
-      }
+      await Chef.findByIdAndUpdate(
+        chefId,
+        { chefOfTheWeek: true },
+        { session }
+      );
 
       const newChefOfTheWeek = new ChefOfTheWeek({
         _id: chef._id,
         name: chef.name,
-        image: chef.image,
-        description: chef.description,
-        status: chef.status,
       });
 
       const savedChefOfTheWeek = await newChefOfTheWeek.save({ session });
@@ -41,74 +44,24 @@ const ChefOfTheWeekHandler = {
         _id: { $ne: chef._id },
       }).session(session);
 
+      await ChefOfTheWeek.deleteMany({ _id: { $ne: chef._id } }).session(
+        session
+      );
+
       await Chef.updateMany(
         { _id: { $in: oldChefsOfTheWeek.map((chef) => chef._id) } },
         { chefOfTheWeek: false },
         { session }
       );
 
-      await ChefOfTheWeek.deleteMany({ _id: { $ne: chef._id } }, { session });
-
       await session.commitTransaction();
       session.endSession();
 
-      return savedChefOfTheWeek;
+      return { _id: chef._id.toString(), name: savedChefOfTheWeek.name };
     } catch (error) {
       await session.abortTransaction();
       session.endSession();
       console.error("Error creating Chef of the Week:", error);
-      throw error;
-    }
-  },
-
-  async update(
-    chefOfTheWeekId: string,
-    updatedChefOfTheWeekData: Partial<IChefOfTheWeekModel>
-  ): Promise<IChefOfTheWeekModel | null> {
-    let updatedChefOfTheWeek = await ChefOfTheWeek.findByIdAndUpdate(
-      chefOfTheWeekId,
-      updatedChefOfTheWeekData,
-      {
-        new: true,
-      }
-    );
-    if (!updatedChefOfTheWeek) {
-      return null;
-    }
-    return updatedChefOfTheWeek;
-  },
-
-  async deleteChefOfTheWeek(
-    chefOfTheWeekId: string
-  ): Promise<IChefOfTheWeekModel | null> {
-    const session = await ChefOfTheWeek.startSession();
-    session.startTransaction();
-
-    try {
-      const deletedChefOfTheWeek = await ChefOfTheWeek.findByIdAndUpdate(
-        chefOfTheWeekId,
-        { status: EStatus.ARCHIVE },
-        { new: true }
-      ).session(session);
-
-      if (!deletedChefOfTheWeek) {
-        throw new Error("Chef of the Week not found");
-      }
-
-      await Chef.findByIdAndUpdate(
-        chefOfTheWeekId,
-        { status: EStatus.ARCHIVE },
-        { new: true }
-      ).session(session);
-
-      await session.commitTransaction();
-      session.endSession();
-
-      return deletedChefOfTheWeek;
-    } catch (error) {
-      await session.abortTransaction();
-      session.endSession();
-      console.error("Error archiving Chef of the Week:", error);
       throw error;
     }
   },
