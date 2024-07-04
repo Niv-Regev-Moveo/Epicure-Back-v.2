@@ -9,7 +9,6 @@ const ChefHandler = {
       const chefs = await Chef.aggregate([
         { $match: { status: EStatus.ACTIVE } },
       ]);
-      console.log("Fetched chefs:", chefs);
       return chefs;
     } catch (error) {
       console.error("Error fetching chefs:", error);
@@ -54,7 +53,6 @@ const ChefHandler = {
   async create(chefData: IChefModel): Promise<IChefModel> {
     const newChef = new Chef(chefData);
     const savedChef = await newChef.save();
-    console.log(savedChef);
     return savedChef;
   },
 
