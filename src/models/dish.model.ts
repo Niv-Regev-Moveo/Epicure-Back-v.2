@@ -15,25 +15,28 @@ export interface IDishModel extends Document {
   status: EStatus;
 }
 
-const dishSchema = new Schema<IDishModel>({
-  name: { type: String, required: true },
-  image: { type: String, required: true },
-  type: { type: String, enum: EIconMeaning, default: null, required: false },
-  price: { type: Number, required: true },
-  tags: [{ type: String, required: false }],
-  ingredients: [{ type: String, required: true }],
-  restaurant: {
-    type: Schema.Types.ObjectId,
-    ref: "Restaurant",
-    required: true,
+const dishSchema = new Schema<IDishModel>(
+  {
+    name: { type: String, required: true },
+    image: { type: String, required: true },
+    type: { type: String, enum: EIconMeaning, default: null, required: false },
+    price: { type: Number, required: true },
+    tags: [{ type: String, required: false }],
+    ingredients: [{ type: String, required: true }],
+    restaurant: {
+      type: Schema.Types.ObjectId,
+      ref: "Restaurant",
+      required: true,
+    },
+    status: {
+      type: String,
+      enum: EStatus,
+      default: EStatus.ACTIVE,
+      required: true,
+    },
   },
-  status: {
-    type: String,
-    enum: EStatus,
-    default: EStatus.ACTIVE,
-    required: true,
-  },
-});
+  { versionKey: false }
+);
 
 const Dish = mongoose.model<IDishModel>("Dish", dishSchema);
 

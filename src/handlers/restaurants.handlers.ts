@@ -2,7 +2,7 @@ import mongoose from "mongoose";
 import { EStatus } from "../enum/status.enum";
 import Chef from "../models/chef.model";
 import Restaurant, { IRestaurantModel } from "../models/restaurant.model";
-import Dish from "../models/chefOfTheWeek.model";
+import Dish from "../models/dish.model";
 
 const RestaurantHandler = {
   async getAll(): Promise<IRestaurantModel[]> {
@@ -10,6 +10,45 @@ const RestaurantHandler = {
       const restaurants = await Restaurant.aggregate([
         {
           $match: { status: EStatus.ACTIVE },
+        },
+        {
+          $lookup: {
+            from: "chefs",
+            localField: "chef",
+            foreignField: "_id",
+            as: "chefDetails",
+          },
+        },
+        {
+          $unwind: "$chefDetails",
+        },
+        {
+          $lookup: {
+            from: "dishes",
+            localField: "_id",
+            foreignField: "restaurant",
+            as: "dishesDetails",
+          },
+        },
+        {
+          $unwind: "$dishesDetails",
+        },
+        {
+          $match: {
+            "dishesDetails.status": EStatus.ACTIVE,
+          },
+        },
+        {
+          $group: {
+            _id: "$_id",
+            name: { $first: "$name" },
+            image: { $first: "$image" },
+            rating: { $first: "$rating" },
+            description: { $first: "$description" },
+            status: { $first: "$status" },
+            chef: { $first: "$chefDetails" },
+            dishes: { $push: "$dishesDetails" },
+          },
         },
       ]);
       return restaurants;
@@ -28,7 +67,6 @@ const RestaurantHandler = {
       const result = await Restaurant.aggregate([
         {
           $match: {
-            status: "active",
             _id: new mongoose.Types.ObjectId(restaurantId),
           },
         },
@@ -41,6 +79,9 @@ const RestaurantHandler = {
           },
         },
         {
+          $unwind: "$chefDetails",
+        },
+        {
           $lookup: {
             from: "dishes",
             localField: "_id",
@@ -49,19 +90,23 @@ const RestaurantHandler = {
           },
         },
         {
-          $project: {
-            name: 1,
-            image: 1,
-            rating: 1,
-            description: 1,
-            dishes: {
-              $filter: {
-                input: "$dishesDetails",
-                as: "dish",
-                cond: { $eq: ["$$dish.status", "active"] },
-              },
-            },
-            chefName: { $arrayElemAt: ["$chefDetails.name", 0] },
+          $unwind: "$dishesDetails",
+        },
+        {
+          $match: {
+            "dishesDetails.status": EStatus.ACTIVE,
+          },
+        },
+        {
+          $group: {
+            _id: "$_id",
+            name: { $first: "$name" },
+            image: { $first: "$image" },
+            rating: { $first: "$rating" },
+            description: { $first: "$description" },
+            status: { $first: "$status" },
+            chef: { $first: "$chefDetails" }, // Populate full chef details
+            dishes: { $push: "$dishesDetails" },
           },
         },
       ]);
@@ -79,12 +124,13 @@ const RestaurantHandler = {
       const savedRestaurant = await newRestaurant.save();
       const populatedRestaurant = await savedRestaurant.populate("chef");
 
-      if (populatedRestaurant && populatedRestaurant.chef)
+      if (populatedRestaurant && populatedRestaurant.chef) {
         await Chef.findByIdAndUpdate(
           populatedRestaurant.chef,
           { $push: { restaurants: populatedRestaurant._id } },
           { new: true, useFindAndModify: false }
         );
+      }
 
       return populatedRestaurant;
     } catch (error) {
@@ -104,29 +150,38 @@ const RestaurantHandler = {
       const updatedRestaurant = await Restaurant.findByIdAndUpdate(
         restaurantId,
         updatedRestaurantData,
-        { new: true }
-      ).session(session);
+        { new: true, useFindAndModify: false, session }
+      );
 
       if (!updatedRestaurant) {
         throw new Error("Restaurant not found");
       }
 
+      const populatedRestaurant = await Restaurant.findById(restaurantId)
+        .populate("chef")
+        .populate("dishes")
+        .select("-__v");
       if (updatedRestaurantData.status === EStatus.ACTIVE) {
         await Chef.findByIdAndUpdate(
-          updatedRestaurant.chef,
-          { $addToSet: { restaurants: updatedRestaurant._id } },
-          { new: true, useFindAndModify: false }
-        ).session(session);
+          populatedRestaurant?.chef?._id,
+          { $addToSet: { restaurants: populatedRestaurant._id } },
+          { new: true, useFindAndModify: false, session }
+        );
       }
 
       await session.commitTransaction();
       session.endSession();
 
-      return updatedRestaurant;
+      return populatedRestaurant;
     } catch (error) {
       await session.abortTransaction();
       session.endSession();
       console.error("Error updating restaurant status:", error);
+
+      if (error.name === "ValidationError") {
+        console.error("Validation Error:", error.message);
+      }
+
       throw error;
     }
   },

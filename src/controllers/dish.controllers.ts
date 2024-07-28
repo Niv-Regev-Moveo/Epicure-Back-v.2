@@ -27,12 +27,10 @@ export const getById = async (req: Request, res: Response) => {
 
 export const create = async (req: Request, res: Response) => {
   try {
-    const dishData = req.body;
-    const newDish = await DishHandler.create(dishData);
-
+    const newDish = await DishHandler.create(req.body);
     res.status(201).json(newDish);
   } catch (error) {
-    console.error("Error in createDish controller:", error);
+    console.error("Error in createDish controller:", error); // Log error details
     res.status(500).json({ message: "An unexpected error occurred" });
   }
 };
@@ -45,7 +43,6 @@ export const update = async (req: Request, res: Response) => {
     const updatedDish = await DishHandler.update(dishId, updatedDishData);
 
     if (!updatedDish) {
-      console.log("Dish not found after update attempt");
       return res
         .status(404)
         .json({ message: "The specified Dish does not exist" });
@@ -61,7 +58,8 @@ export const update = async (req: Request, res: Response) => {
 export const deleteDish = async (req: Request, res: Response) => {
   try {
     const dishId = req.params.id;
-    const deletedDish = await DishHandler.deleteDish(dishId);
+    const deletedDish = await DishHandler.delete(dishId);
+
     if (!deletedDish) {
       return res
         .status(404)

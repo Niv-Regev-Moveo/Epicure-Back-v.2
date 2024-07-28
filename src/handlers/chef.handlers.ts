@@ -5,10 +5,9 @@ import { EStatus } from "../enum/status.enum";
 const ChefHandler = {
   async getAll(): Promise<IChefModel[]> {
     try {
-      console.log("Fetching all chefs");
-      const chefs = await Chef.aggregate([
-        { $match: { status: EStatus.ACTIVE } },
-      ]);
+      const chefs = await Chef.find()
+        .select("-chefOfTheWeek")
+        .populate("restaurants", "name");
       return chefs;
     } catch (error) {
       console.error("Error fetching chefs:", error);
@@ -17,33 +16,16 @@ const ChefHandler = {
   },
 
   async getById(chefId: string): Promise<IChefModel | null> {
-    try {
-      const result = await Chef.aggregate([
-        { $match: { _id: new mongoose.Types.ObjectId(chefId) } },
-        {
-          $lookup: {
-            from: "restaurants",
-            localField: "restaurants",
-            foreignField: "_id",
-            as: "restaurantDetails",
-          },
-        },
-        {
-          $project: {
-            name: 1,
-            image: 1,
-            restaurants: {
-              $filter: {
-                input: "$restaurantDetails",
-                as: "restaurant",
-                cond: { $eq: ["$$restaurant.status", "active"] },
-              },
-            },
-          },
-        },
-      ]);
+    if (!mongoose.Types.ObjectId.isValid(chefId)) {
+      throw new Error(`Invalid chef ID format: ${chefId}`);
+    }
 
-      return result[0] || null;
+    try {
+      const chef = await Chef.findById(chefId)
+        .select("-chefOfTheWeek")
+        .populate("restaurants", "name")
+        .exec();
+      return chef;
     } catch (error) {
       console.error("Error fetching chef by ID:", error);
       throw error;
@@ -51,31 +33,54 @@ const ChefHandler = {
   },
 
   async create(chefData: IChefModel): Promise<IChefModel> {
-    const newChef = new Chef(chefData);
-    const savedChef = await newChef.save();
-    return savedChef;
+    try {
+      const newChef = new Chef(chefData);
+      const savedChef = await newChef.save();
+      return savedChef;
+    } catch (error) {
+      console.error("Error creating chef:", error);
+      throw error;
+    }
   },
 
   async update(
     chefId: string,
     updateChefData: Partial<IChefModel>
   ): Promise<IChefModel | null> {
-    let updateChef = await Chef.findByIdAndUpdate(chefId, updateChefData, {
-      new: true,
-    });
-    if (!updateChef) {
-      return null;
+    if (!mongoose.Types.ObjectId.isValid(chefId)) {
+      throw new Error(`Invalid chef ID format: ${chefId}`);
     }
-    return updateChef;
+
+    try {
+      const updatedChef = await Chef.findByIdAndUpdate(chefId, updateChefData, {
+        new: true,
+        select: "-__v -chefOfTheWeek",
+      })
+        .populate("restaurants", "name")
+        .exec();
+      return updatedChef;
+    } catch (error) {
+      console.error("Error updating chef:", error);
+      throw error;
+    }
   },
 
   async delete(chefId: string): Promise<IChefModel | null> {
-    const deletedChef = await Chef.findByIdAndUpdate(
-      chefId,
-      { status: EStatus.ARCHIVE },
-      { new: true }
-    );
-    return deletedChef;
+    if (!mongoose.Types.ObjectId.isValid(chefId)) {
+      throw new Error(`Invalid chef ID format: ${chefId}`);
+    }
+
+    try {
+      const deletedChef = await Chef.findByIdAndUpdate(
+        chefId,
+        { status: EStatus.ARCHIVE },
+        { new: true }
+      ).exec();
+      return deletedChef;
+    } catch (error) {
+      console.error("Error deleting chef:", error);
+      throw error;
+    }
   },
 };
 

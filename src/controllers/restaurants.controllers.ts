@@ -14,6 +14,7 @@ export const getById = async (req: Request, res: Response) => {
   try {
     const restaurantId = req.params.id;
     const restaurant = await RestaurantHandler.getById(restaurantId);
+
     if (!restaurant) {
       return res
         .status(404)
@@ -51,6 +52,7 @@ export const update = async (req: Request, res: Response) => {
         .json({ message: "The specified Restaurant does not exist" });
     }
   } catch (error) {
+    console.error(`Error updating restaurant ${req.params.id}:`, error);
     res.status(500).json({ message: "Error: An unexpected error occurred" });
   }
 };

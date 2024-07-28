@@ -19,7 +19,6 @@ export const getChefOfTheWeek = async (req: Request, res: Response) => {
 export const create = async (req: Request, res: Response) => {
   try {
     const chefId = req.params.id;
-    console.log("Received chef ID:", chefId);
 
     const newChefOfTheWeek = await ChefOfTheWeekHandler.create(chefId);
     res.status(201).json(newChefOfTheWeek);

@@ -4,8 +4,10 @@ import ChefHandler from "../handlers/chef.handlers";
 export const getAll = async (req: Request, res: Response) => {
   try {
     const chefs = await ChefHandler.getAll();
-    res.status(200).json(chefs);
+    res.status(200).send(chefs);
   } catch (error) {
+    console.error("Error fetching chefs:", error);
+
     res.status(500).json({ message: "Error: An unexpected error occurred" });
   }
 };
@@ -67,6 +69,7 @@ export const deleteChef = async (req: Request, res: Response) => {
 
     res.json(deletedChef);
   } catch (error) {
+    console.error("Error in deleteChef controller:", error);
     res.status(500).json({ message: "An unexpected error occurred" });
   }
 };
