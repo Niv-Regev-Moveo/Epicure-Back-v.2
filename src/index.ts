@@ -19,8 +19,7 @@ setupSwagger(app);
 
 app.use("/api", apiRouter);
 
-const PORT = process.env.PORT || 3001;
-
+const PORT = process.env.PORT || 3000;
 mongoose
   .connect(process.env.MONGODB_URI as string)
   .then(() => {

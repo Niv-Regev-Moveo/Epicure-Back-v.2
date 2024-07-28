@@ -9,7 +9,6 @@ export const search = async (req: Request, res: Response) => {
     if (typeof response === "string") {
       res.status(404).json({ message: "Keyword not exist in the database" });
     } else {
-      console.log("Search results:", JSON.stringify(response, null, 2));
       res.status(200).json(response);
     }
   } catch (err) {

@@ -11,23 +11,6 @@ const DishHandler = {
         {
           $match: { status: EStatus.ACTIVE },
         },
-      ]);
-      return dishes;
-    } catch (error) {
-      console.error("Error fetching Dishes:", error);
-      throw error;
-    }
-  },
-
-  async getById(dishId: string): Promise<IDishModel | null> {
-    try {
-      const result = await Dish.aggregate([
-        {
-          $match: {
-            status: "active",
-            _id: new mongoose.Types.ObjectId(dishId),
-          },
-        },
         {
           $lookup: {
             from: "restaurants",
@@ -35,6 +18,9 @@ const DishHandler = {
             foreignField: "_id",
             as: "restaurantDetails",
           },
+        },
+        {
+          $unwind: "$restaurantDetails",
         },
         {
           $project: {
@@ -49,6 +35,47 @@ const DishHandler = {
           },
         },
       ]);
+      return dishes;
+    } catch (error) {
+      console.error("Error fetching dishes:", error);
+      throw error;
+    }
+  },
+
+  async getById(dishId: string): Promise<IDishModel | null> {
+    try {
+      const result = await Dish.aggregate([
+        {
+          $match: {
+            status: EStatus.ACTIVE,
+            _id: new mongoose.Types.ObjectId(dishId),
+          },
+        },
+        {
+          $lookup: {
+            from: "restaurants",
+            localField: "restaurant",
+            foreignField: "_id",
+            as: "restaurantDetails",
+          },
+        },
+        {
+          $unwind: "$restaurantDetails",
+        },
+        {
+          $project: {
+            name: 1,
+            image: 1,
+            type: 1,
+            price: 1,
+            tags: 1,
+            ingredients: 1,
+            status: 1,
+            restaurantName: "$restaurantDetails.name",
+            // restaurant: "$restaurantDetails.name",
+          },
+        },
+      ]);
 
       return result[0] || null;
     } catch (error) {
@@ -57,7 +84,7 @@ const DishHandler = {
     }
   },
 
-  async create(dishData: any) {
+  async create(dishData: IDishModel): Promise<IDishModel> {
     try {
       const newDish = new Dish(dishData);
       const savedDish = await newDish.save();
@@ -65,7 +92,7 @@ const DishHandler = {
 
       if (populatedDish && populatedDish.restaurant)
         await Restaurant.findByIdAndUpdate(
-          savedDish.restaurant,
+          populatedDish.restaurant,
           { $push: { dishes: savedDish._id } },
           { new: true, useFindAndModify: false }
         );
@@ -76,72 +103,75 @@ const DishHandler = {
       throw error;
     }
   },
+
   async update(
-    restaurantId: string,
-    updatedRestaurantData: Partial<IRestaurantModel>
-  ): Promise<IRestaurantModel | null> {
+    dishId: string,
+    updatedDishData: Partial<IDishModel>
+  ): Promise<IDishModel | null> {
     const session = await mongoose.startSession();
     session.startTransaction();
 
     try {
-      const updatedRestaurant = await Restaurant.findByIdAndUpdate(
-        restaurantId,
-        updatedRestaurantData,
-        { new: true }
-      ).session(session);
+      const updatedDish = await Dish.findByIdAndUpdate(
+        dishId,
+        updatedDishData,
+        { new: true, useFindAndModify: false, session }
+      );
 
-      if (!updatedRestaurant) {
-        throw new Error("Restaurant not found");
+      if (!updatedDish) {
+        throw new Error("Dish not found");
       }
 
-      if (updatedRestaurantData.status === EStatus.ARCHIVE) {
-        await Dish.updateMany(
-          { restaurant: restaurantId },
-          { status: EStatus.ARCHIVE }
-        ).session(session);
-      } else if (updatedRestaurantData.status === EStatus.ACTIVE) {
-        await Dish.updateMany(
-          { restaurant: restaurantId },
-          { status: EStatus.ACTIVE }
-        ).session(session);
+      const populatedDish = await Dish.findById(dishId)
+        .populate("restaurant")
+        .select("-__v");
 
-        await Chef.findByIdAndUpdate(
-          updatedRestaurant.chef,
-          { $addToSet: { restaurants: updatedRestaurant._id } },
-          { new: true, useFindAndModify: false }
-        ).session(session);
+      if (updatedDishData.status === EStatus.ACTIVE && populatedDish) {
+        await Restaurant.findByIdAndUpdate(
+          populatedDish.restaurant._id,
+          { $addToSet: { dishes: populatedDish._id } },
+          { new: true, useFindAndModify: false, session }
+        );
       }
 
       await session.commitTransaction();
       session.endSession();
 
-      return updatedRestaurant;
+      return populatedDish;
     } catch (error) {
       await session.abortTransaction();
       session.endSession();
-      console.error("Error updating restaurant and its dishes:", error);
+      console.error("Error updating dish:", error);
+
+      if (error.name === "ValidationError") {
+        console.error("Validation Error:", error.message);
+      }
+
       throw error;
     }
   },
+  async delete(dishId: string): Promise<IDishModel | null> {
+    const session = await mongoose.startSession();
+    session.startTransaction();
 
-  async deleteDish(dishId: string): Promise<IDishModel | null> {
     try {
       const deletedDish = await Dish.findByIdAndUpdate(
         dishId,
         { status: EStatus.ARCHIVE },
-        { new: true, useFindAndModify: false }
+        { new: true, session: session }
       );
 
-      if (deletedDish) {
-        await Restaurant.findByIdAndUpdate(
-          deletedDish.restaurant,
-          { $pull: { dishes: deletedDish._id } },
-          { useFindAndModify: false }
-        );
+      if (!deletedDish) {
+        throw new Error("Dish not found");
       }
+
+      await session.commitTransaction();
+      session.endSession();
 
       return deletedDish;
     } catch (error) {
+      await session.abortTransaction();
+      session.endSession();
       console.error("Error archiving dish:", error);
       throw error;
     }
