@@ -1,12 +1,12 @@
 import express from "express";
 import * as chefController from "../controllers/chef.controllers";
 
-const chefsRouter = express.Router();
+const chefsRoutes = express.Router();
 
-chefsRouter.get("/", chefController.getAll);
-chefsRouter.get("/:id", chefController.getById);
-chefsRouter.post("/", chefController.create);
-chefsRouter.put("/:id", chefController.update);
-chefsRouter.delete("/:id", chefController.deleteChef);
+chefsRoutes.get("/", chefController.getAll);
+chefsRoutes.get("/:id", chefController.getById);
+chefsRoutes.post("/", chefController.create);
+chefsRoutes.put("/:id", chefController.update);
+chefsRoutes.delete("/:id", chefController.deleteChef);
 
-export default chefsRouter;
+export default chefsRoutes;
