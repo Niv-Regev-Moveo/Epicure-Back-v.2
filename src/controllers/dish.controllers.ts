@@ -15,7 +15,9 @@ export const getById = async (req: Request, res: Response) => {
     const dishId = req.params.id;
     const dish = await DishHandler.getById(dishId);
     if (!dish) {
-      return res.status(404).json({ message: "Dish not found" });
+      return res
+        .status(404)
+        .json({ message: "The specified Dish does not exist" });
     }
     res.json(dish);
   } catch (error) {
@@ -26,8 +28,6 @@ export const getById = async (req: Request, res: Response) => {
 export const create = async (req: Request, res: Response) => {
   try {
     const dishData = req.body;
-    console.log("Received data for new dish:", dishData);
-
     const newDish = await DishHandler.create(dishData);
 
     res.status(201).json(newDish);
@@ -42,17 +42,15 @@ export const update = async (req: Request, res: Response) => {
     const dishId = req.params.id;
     const updatedDishData = req.body;
 
-    console.log("Dish ID:", dishId);
-    console.log("Updated Dish Data:", updatedDishData);
-
     const updatedDish = await DishHandler.update(dishId, updatedDishData);
 
     if (!updatedDish) {
       console.log("Dish not found after update attempt");
-      return res.status(404).json({ message: "Dish not found" });
+      return res
+        .status(404)
+        .json({ message: "The specified Dish does not exist" });
     }
 
-    console.log("Dish successfully updated:", updatedDish);
     res.status(200).send(updatedDish);
   } catch (error) {
     console.error("Error during dish update:", error);
@@ -65,9 +63,10 @@ export const deleteDish = async (req: Request, res: Response) => {
     const dishId = req.params.id;
     const deletedDish = await DishHandler.deleteDish(dishId);
     if (!deletedDish) {
-      return res.status(404).json({ message: "Dish not found" });
+      return res
+        .status(404)
+        .json({ message: "The specified Dish does not exist" });
     }
-    console.log("Dish status updated to Archive :", deletedDish);
 
     res.json(deletedDish);
   } catch (error) {

@@ -1,7 +1,8 @@
 import mongoose from "mongoose";
 import { EStatus } from "../enum/status.enum";
 import Dish, { IDishModel } from "../models/dish.model";
-import Restaurant from "../models/restaurant.model";
+import Restaurant, { IRestaurantModel } from "../models/restaurant.model";
+import Chef from "../models/chef.model";
 
 const DishHandler = {
   async getAll(): Promise<IDishModel[]> {
@@ -43,6 +44,7 @@ const DishHandler = {
             price: 1,
             tags: 1,
             ingredients: 1,
+            status: 1,
             restaurantName: "$restaurantDetails.name",
           },
         },
@@ -59,12 +61,14 @@ const DishHandler = {
     try {
       const newDish = new Dish(dishData);
       const savedDish = await newDish.save();
+      const populatedDish = await savedDish.populate("restaurant");
 
-      await Restaurant.findByIdAndUpdate(
-        savedDish.restaurant,
-        { $push: { dishes: savedDish._id } },
-        { new: true, useFindAndModify: false }
-      );
+      if (populatedDish && populatedDish.restaurant)
+        await Restaurant.findByIdAndUpdate(
+          savedDish.restaurant,
+          { $push: { dishes: savedDish._id } },
+          { new: true, useFindAndModify: false }
+        );
 
       return savedDish;
     } catch (error) {
@@ -73,33 +77,55 @@ const DishHandler = {
     }
   },
   async update(
-    dishId: string,
-    updatedDishData: Partial<IDishModel>
-  ): Promise<IDishModel | null> {
+    restaurantId: string,
+    updatedRestaurantData: Partial<IRestaurantModel>
+  ): Promise<IRestaurantModel | null> {
+    const session = await mongoose.startSession();
+    session.startTransaction();
+
     try {
-      const { _id, ...updateData } = updatedDishData;
-      console.log("Updating Dish:", dishId, updateData);
+      const updatedRestaurant = await Restaurant.findByIdAndUpdate(
+        restaurantId,
+        updatedRestaurantData,
+        { new: true }
+      ).session(session);
 
-      const updatedDish = await Dish.findByIdAndUpdate(dishId, updateData, {
-        new: true,
-        runValidators: true,
-      });
-
-      if (!updatedDish) {
-        console.log("Dish not found after update attempt");
-        return null;
+      if (!updatedRestaurant) {
+        throw new Error("Restaurant not found");
       }
 
-      console.log("Dish updated successfully:", updatedDish);
-      return updatedDish;
+      if (updatedRestaurantData.status === EStatus.ARCHIVE) {
+        await Dish.updateMany(
+          { restaurant: restaurantId },
+          { status: EStatus.ARCHIVE }
+        ).session(session);
+      } else if (updatedRestaurantData.status === EStatus.ACTIVE) {
+        await Dish.updateMany(
+          { restaurant: restaurantId },
+          { status: EStatus.ACTIVE }
+        ).session(session);
+
+        await Chef.findByIdAndUpdate(
+          updatedRestaurant.chef,
+          { $addToSet: { restaurants: updatedRestaurant._id } },
+          { new: true, useFindAndModify: false }
+        ).session(session);
+      }
+
+      await session.commitTransaction();
+      session.endSession();
+
+      return updatedRestaurant;
     } catch (error) {
-      console.error("Error updating dish:", error);
+      await session.abortTransaction();
+      session.endSession();
+      console.error("Error updating restaurant and its dishes:", error);
       throw error;
     }
   },
+
   async deleteDish(dishId: string): Promise<IDishModel | null> {
     try {
-      // Update the status of the dish to "archive"
       const deletedDish = await Dish.findByIdAndUpdate(
         dishId,
         { status: EStatus.ARCHIVE },
@@ -107,7 +133,6 @@ const DishHandler = {
       );
 
       if (deletedDish) {
-        // Remove the dish from the restaurant's dishes array if it's archived
         await Restaurant.findByIdAndUpdate(
           deletedDish.restaurant,
           { $pull: { dishes: deletedDish._id } },

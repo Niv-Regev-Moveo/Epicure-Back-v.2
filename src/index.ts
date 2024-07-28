@@ -3,6 +3,7 @@ import mongoose from "mongoose";
 import dotenv from "dotenv";
 import cors from "cors";
 import apiRouter from "./routes/api.routes";
+import { setupSwagger } from "./swagger/swagger";
 
 dotenv.config();
 
@@ -14,9 +15,11 @@ app.get("/", (req, res) => {
   res.send("Connected with Express, Rest API");
 });
 
+setupSwagger(app);
+
 app.use("/api", apiRouter);
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3001;
 
 mongoose
   .connect(process.env.MONGODB_URI as string)

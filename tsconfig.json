@@ -12,14 +12,13 @@
     "skipLibCheck": true,
     "allowJs": true,
     "strict": false,
-    "baseUrl": "./",  // Ensures that base paths are relative to the tsconfig location
+    "baseUrl": "./",
     "paths": {
-      "*": ["src/*", "src/enum/*"]  // Adds custom paths for resolving modules
+      "*": ["src/*"]
     }
   },
   "include": [
-    "src/**/*",
-    "src/enum/**/*"  // Ensures all files in the enum directory are included
+    "src/**/*"
   ],
   "exclude": [
     "node_modules",

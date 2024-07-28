@@ -1,7 +1,6 @@
 import mongoose from "mongoose";
 import Chef, { IChefModel } from "../models/chef.model";
 import { EStatus } from "../enum/status.enum";
-import ChefOfTheWeek from "../models/cotw.model";
 
 const ChefHandler = {
   async getAll(): Promise<IChefModel[]> {
@@ -10,7 +9,6 @@ const ChefHandler = {
       const chefs = await Chef.aggregate([
         { $match: { status: EStatus.ACTIVE } },
       ]);
-      console.log("Fetched chefs:", chefs);
       return chefs;
     } catch (error) {
       console.error("Error fetching chefs:", error);
@@ -23,10 +21,24 @@ const ChefHandler = {
       const result = await Chef.aggregate([
         { $match: { _id: new mongoose.Types.ObjectId(chefId) } },
         {
+          $lookup: {
+            from: "restaurants",
+            localField: "restaurants",
+            foreignField: "_id",
+            as: "restaurantDetails",
+          },
+        },
+        {
           $project: {
             name: 1,
             image: 1,
-            restaurants: 1,
+            restaurants: {
+              $filter: {
+                input: "$restaurantDetails",
+                as: "restaurant",
+                cond: { $eq: ["$$restaurant.status", "active"] },
+              },
+            },
           },
         },
       ]);
@@ -41,7 +53,6 @@ const ChefHandler = {
   async create(chefData: IChefModel): Promise<IChefModel> {
     const newChef = new Chef(chefData);
     const savedChef = await newChef.save();
-    console.log(savedChef);
     return savedChef;
   },
 
