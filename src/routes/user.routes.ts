@@ -3,7 +3,8 @@ import * as userController from "../controllers/user.controllers";
 
 const usersRoutes = express.Router();
 
-usersRoutes.get("/", userController.getAll);
-usersRoutes.post("/", userController.create);
+usersRoutes.post("/", userController.add);
 usersRoutes.delete("/:id", userController.deleteUser);
+usersRoutes.post("/login", userController.login);
+
 export default usersRoutes;
