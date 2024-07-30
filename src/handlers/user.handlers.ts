@@ -53,9 +53,7 @@ const UserHandler = {
 
       const isMatch = await bcrypt.compare(password, user.password);
       if (isMatch) {
-        const token = jwt.sign({ id: user._id, role: user.role }, secretKey, {
-          expiresIn: "1m",
-        });
+        const token = jwt.sign({ id: user._id, role: user.role }, secretKey);
         return { user, token };
       } else {
         console.error("Password does not match for user:", mail);
