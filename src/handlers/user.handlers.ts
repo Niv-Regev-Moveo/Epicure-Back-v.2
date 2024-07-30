@@ -1,6 +1,15 @@
 import User, { IUserModel } from "../models/user.model";
 import mongoose from "mongoose";
 import bcrypt from "bcrypt";
+import jwt from "jsonwebtoken";
+
+interface ILoginResponse {
+  user: IUserModel;
+  token: string;
+}
+
+const saltRounds = 10;
+const secretKey = process.env.JWT_SECRET || "YOUR-SECRET-KEY";
 
 const UserHandler = {
   async getById(userId: string): Promise<IUserModel | null> {
@@ -13,6 +22,7 @@ const UserHandler = {
       return user;
     } catch (error) {
       console.error(`Error fetching user by ID:`, error);
+      return null;
     }
   },
 
@@ -22,8 +32,9 @@ const UserHandler = {
       if (existingUser) {
         throw new Error("User with this email already exists");
       }
-      const salt = await bcrypt.genSalt(10);
-      userData.password = await bcrypt.hash(userData.password, salt);
+
+      const hash = await bcrypt.hash(userData.password, saltRounds);
+      userData.password = hash;
       const newUser = new User(userData);
       const savedUser = await newUser.save();
       return savedUser;
@@ -32,19 +43,22 @@ const UserHandler = {
       throw error;
     }
   },
-
-  async login(mail: string, password: string): Promise<IUserModel | null> {
+  async login(mail: string, password: string): Promise<ILoginResponse | null> {
     try {
       const user = await User.findOne({ mail });
       if (!user) {
+        console.error("User not found with email:", mail);
         return null;
       }
 
       const isMatch = await bcrypt.compare(password, user.password);
-
       if (isMatch) {
-        return user;
+        const token = jwt.sign({ id: user._id, role: user.role }, secretKey, {
+          expiresIn: "1m",
+        });
+        return { user, token };
       } else {
+        console.error("Password does not match for user:", mail);
         return null;
       }
     } catch (error) {

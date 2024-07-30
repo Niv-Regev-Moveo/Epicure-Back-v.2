@@ -73,3 +73,7 @@ export const deleteChef = async (req: Request, res: Response) => {
     res.status(500).json({ message: "An unexpected error occurred" });
   }
 };
+
+export function editChef(arg0: string, editChef: any) {
+  throw new Error("Function not implemented.");
+}

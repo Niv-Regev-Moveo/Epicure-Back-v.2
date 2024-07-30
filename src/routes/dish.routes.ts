@@ -1,12 +1,13 @@
 import express from "express";
 import * as dishesController from "../controllers/dish.controllers";
+import { authMiddleware } from "../middleware/authMiddleWare";
 
 const dishesRoutes = express.Router();
 
 dishesRoutes.get("/", dishesController.getAll);
 dishesRoutes.get("/:id", dishesController.getById);
-dishesRoutes.post("/", dishesController.create);
-dishesRoutes.put("/:id", dishesController.update);
-dishesRoutes.delete("/:id", dishesController.deleteDish);
+dishesRoutes.post("/", authMiddleware, dishesController.create);
+dishesRoutes.put("/:id", authMiddleware, dishesController.update);
+dishesRoutes.delete("/:id", authMiddleware, dishesController.deleteDish);
 
 export default dishesRoutes;

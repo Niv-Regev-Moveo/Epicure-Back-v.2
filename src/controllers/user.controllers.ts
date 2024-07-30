@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import UserHandler from "../handlers/user.handlers";
-import { log } from "console";
+import { IUserModel } from "models/user.model";
 
 export const getById = async (req: Request, res: Response) => {
   try {
@@ -22,23 +22,32 @@ export const login = async (req: Request, res: Response) => {
   const { mail, password } = req.body;
 
   try {
-    const user = await UserHandler.login(mail, password);
-    if (!user) {
-      return res.status(404).json({ message: "Invalid email or password" });
+    const loginResponse = await UserHandler.login(mail, password);
+    if (!loginResponse) {
+      return res.status(403).json({ message: "Invalid User Details" });
     }
 
-    res.status(200).json({ message: "Login successful", user });
+    const { user, token } = loginResponse;
+    const { password: _, ...userWithoutPassword } = user.toObject();
+    res.status(200).json({
+      message: "Login successful",
+      user: userWithoutPassword,
+      token,
+    });
   } catch (error) {
-    res.status(500).json({ message: "Error: An unexpected error occurred" });
+    console.error("Error during login:", error);
+    res.status(500).json({ message: "An unexpected error occurred" });
   }
 };
 
-export const add = async (req: Request, res: Response) => {
+export const createUser = async (req: Request, res: Response) => {
   try {
-    const newUser = await UserHandler.create(req.body);
+    const userData: IUserModel = req.body;
+    const newUser = await UserHandler.create(userData);
     res.status(201).json(newUser);
   } catch (error) {
-    res.status(500).json({ message: "Error: An unexpected error occurred" });
+    console.error("Error creating user:", error);
+    res.status(500).json({ message: "Error creating user" });
   }
 };
 
